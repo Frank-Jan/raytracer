@@ -44,8 +44,8 @@ int main() {
         double elapsed_time;
 
         WorldFactory wf;
-//        wf._type = WorldType::KDTREEA;
-        wf._type = WorldType::KDTREEB;
+        wf._type = WorldType::KDTREEA;
+//        wf._type = WorldType::KDTREEB;
 //        wf._type = WorldType::SIMPLE;
 
         timer.start();
