@@ -27,7 +27,7 @@ namespace KDTreeA
 
     inline std::string toLabel(void *ptr)
     {
-        return std::to_string((int) ptr);
+        return std::to_string((long) ptr);
     }
 
     inline std::string triangle2Label(const Triangle *ptr)

@@ -133,10 +133,11 @@ bool BBox::clipRay(const Ray& ray, FLOAT& t_near, FLOAT& t_far) const
 
 bool overlapping(const BBox& a, const BBox& b)
 {
-    return  a.getSmall(Plane::x) > b.getBig(Plane::x) |
+    return  (a.getSmall(Plane::x) > b.getBig(Plane::x) |
             a.getSmall(Plane::y) > b.getBig(Plane::y) |
-            a.getSmall(Plane::z) > b.getBig(Plane::z) |
-            b.getSmall(Plane::x) > a.getBig(Plane::x) |
+            a.getSmall(Plane::z) > b.getBig(Plane::z)) ||
+
+            (b.getSmall(Plane::x) > a.getBig(Plane::x) |
             b.getSmall(Plane::y) > a.getBig(Plane::y) |
-            b.getSmall(Plane::z) > a.getBig(Plane::z);
+            b.getSmall(Plane::z) > a.getBig(Plane::z));
 }

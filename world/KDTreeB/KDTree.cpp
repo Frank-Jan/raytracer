@@ -8,13 +8,17 @@
 
 namespace KDTreeB
 {
+//    using ActiveBoxes = std::vector<bool>;
+    using ActiveBoxes = std::vector<char>;
+
     KDTree::KDTree(std::vector<Triangle> &_triangles)
     {
 //        triangles.reserve(44174);
 //        nodes.reserve(27941);
         std::vector<TBBox> boxes = setBBox(_triangles);
 //        build(boxes);
-        buildB(boxes);
+//        buildB(boxes);
+        buildC(boxes);
 
         LOGGER.size_bytes +=    sizeof(Triangle) * triangles.size();
         LOGGER.size_bytes +=    sizeof(UNode) * nodes.size();
@@ -121,7 +125,7 @@ namespace KDTreeB
         return boxes;
     }
 
-    inline void countSplit(int& left, int& right, const std::vector<TBBox> &boxes, const Plane& p, const FLOAT& split)
+    void countSplit(int& left, int& right, const std::vector<TBBox> &boxes, const Plane& p, const FLOAT& split)
     {
         left = 0;
         right = 0;
@@ -267,7 +271,7 @@ namespace KDTreeB
         FLOAT split;
 
         do {
-            std::cout << cBoxes.size() << std::endl;
+//            std::cout << cBoxes.size() << std::endl;
             cost_split = bestSplit(cBoxes, tsplit, split, bba);
             cost_no_split = costNoSplit(cBoxes.size());
             if(cost_no_split > cost_split) {
@@ -326,7 +330,11 @@ namespace KDTreeB
         root = nodes.begin().base();
     }
 
-    inline unsigned count(const std::vector<bool>& ctr)
+
+    /////// Build B \\\\\\\
+
+
+    inline unsigned count(const ActiveBoxes& ctr)
     {
         unsigned i = 0;
         for(bool b : ctr)
@@ -334,9 +342,9 @@ namespace KDTreeB
         return i;
     }
 
-    std::vector<bool> todo_boxes(std::vector<bool>& left, Plane p, double split, const std::vector<TBBox>& boxes)
+    ActiveBoxes todo_boxes(ActiveBoxes& left, Plane p, double split, const std::vector<TBBox>& boxes)
     {
-        std::vector<bool> right;
+        ActiveBoxes right;
         right.resize(left.size());
 
         for(int i = 0; i < boxes.size(); ++i)
@@ -348,7 +356,7 @@ namespace KDTreeB
         return right;
     }
 
-    inline void countSplit(const std::vector<bool>& active, int& left, int& right, const std::vector<TBBox> &boxes, const Plane& p, const FLOAT& split)
+    inline void countSplit(const ActiveBoxes& active, int& left, int& right, const std::vector<TBBox> &boxes, const Plane& p, const FLOAT& split)
     {
         left = 0;
         right = 0;
@@ -368,7 +376,7 @@ namespace KDTreeB
         }
     }
 
-    FLOAT bestSplit(const std::vector<bool>& active_boxes, const std::vector<TBBox>& boxes, Plane& tsplit, FLOAT& split, const BBox& bbox)
+    FLOAT bestSplit(const ActiveBoxes& active_boxes, const std::vector<TBBox>& boxes, Plane& tsplit, FLOAT& split, const BBox& bbox)
     {
         FLOAT cost = hugeValue;
         std::vector<FLOAT> points;
@@ -426,7 +434,7 @@ namespace KDTreeB
         return cost;
     }
 
-    unsigned KDTree::insertTriangles(const std::vector<TBBox>& boxes, const std::vector<bool>& active)
+    unsigned KDTree::insertTriangles(const std::vector<TBBox>& boxes, const ActiveBoxes& active)
     {
         unsigned first = triangles.size();
         for(int i = 0; i < boxes.size(); ++i)
@@ -445,17 +453,17 @@ namespace KDTreeB
         nodes.emplace_back(0,0);
 
         struct StackItem{
-            StackItem(unsigned _idx, std::vector<bool>& _items, const BBox& _bb) :
+            StackItem(unsigned _idx, ActiveBoxes& _items, const BBox& _bb) :
                     idx(_idx), items(std::move(_items)), bb(_bb) { };
             unsigned idx;   // position of node
-            std::vector<bool> items;
+            ActiveBoxes items;
             BBox bb;
         };
 
         std::vector<StackItem> todo;
         std::vector<StackItem> leaves;
 
-        std::vector<bool> active_boxes;
+        ActiveBoxes active_boxes;
         active_boxes.resize(boxes.size(), true);
 
         unsigned cNode = 0;
@@ -477,7 +485,7 @@ namespace KDTreeB
                 bbb.getSmall(tsplit)    = split;
 
                 cNode = nodes.size();
-                std::vector<bool> right = todo_boxes(active_boxes, tsplit, split, boxes);
+                ActiveBoxes right = todo_boxes(active_boxes, tsplit, split, boxes);
 
                 todo.emplace_back(nodes.size()+1, right, bbb);
                 nodes.emplace_back(0,0);
@@ -513,4 +521,103 @@ namespace KDTreeB
         LOGGER.internal_nodes = nodes.size() - LOGGER.nleafs;
         root = nodes.begin().base();
     }
+
+
+
+    ///// BUILD C \\\\\\
+
+    std::vector<TBBox> splitBoxes(const Plane& tsplit, const FLOAT& split, std::vector<TBBox>& boxes)
+    {
+        std::vector<TBBox> right_boxes;
+        right_boxes.reserve(boxes.size()/2);
+
+        for(auto & boxe : boxes) {
+            if(boxe.getBig(tsplit) > split)
+                right_boxes.push_back(boxe);
+        }
+
+        boxes.erase(std::remove_if(boxes.begin(), boxes.end(), [tsplit, split](const BBox& a)->bool { return (a.getSmall(tsplit) > split); }), boxes.end());
+        return right_boxes;
+    }
+
+
+    void KDTree::buildC(const std::vector<TBBox> &boxes) {
+        LOGGER.objects        = boxes.size();
+        LOGGER.worldType      = "KDTreeB";
+        LOGGER.cost_intersect = cost_intersect;
+        LOGGER.cost_travel    = cost_travel;
+        root = nullptr;
+
+        nodes.emplace_back(0,0);
+
+        struct StackItem{
+            StackItem(unsigned _idx, std::vector<TBBox> _items, const BBox& _bb) :
+                    idx(_idx), items(std::move(_items)), bb(_bb) { };
+            unsigned idx;   // position of node
+            std::vector<TBBox> items;
+            BBox bb;
+        };
+
+        std::vector<StackItem> todo;
+        std::vector<StackItem> leaves;
+
+        std::vector<TBBox> cboxes = boxes;
+
+        unsigned cNode = 0;
+        BBox bba = bbox;
+        BBox bbb = bbox;
+        FLOAT cost_split;
+        FLOAT cost_no_split;
+        Plane tsplit;
+        FLOAT split;
+
+        do {
+            cost_split = bestSplit(cboxes, tsplit, split, bba);
+            cost_no_split = costNoSplit(cboxes.size());
+            if(cost_no_split > cost_split) {
+                nodes.at(cNode) = UNode(tsplit, nodes.size()-cNode, split);
+
+                bbb = bba;
+                bba.getBig(tsplit)      = split;
+                bbb.getSmall(tsplit)    = split;
+
+                cNode = nodes.size();
+                std::vector<TBBox> right = splitBoxes(tsplit, split, cboxes);
+
+                todo.emplace_back(nodes.size()+1, right, bbb);
+                nodes.emplace_back(0,0);
+                nodes.emplace_back(0,0);
+
+                continue;
+            }
+            // create leaf
+            leaves.emplace_back(cNode, cboxes, bba);
+            nodes.at(cNode) = UNode(0,0);  // push_back empty node to insert later
+
+            if(not todo.empty())
+            {
+                cNode   = todo.back().idx;
+                cboxes  = std::move(todo.back().items);
+                bba     = todo.back().bb;
+                todo.pop_back();
+                continue;
+            }
+            break;
+        }while(true);
+
+        // fix the leaves
+        unsigned c = 0;
+        unsigned first;
+        LOGGER.nleafs = leaves.size();
+        for(StackItem& s : leaves) {
+            c += s.items.size();
+            first = insertTriangles(s.items);
+            nodes.at(s.idx) = UNode(first, s.items.size());
+        }
+        LOGGER.average_triangles = FLOAT(c) / FLOAT(LOGGER.nleafs);
+        LOGGER.internal_nodes = nodes.size() - LOGGER.nleafs;
+        root = nodes.begin().base();
+    }
+
+
 }

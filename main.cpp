@@ -10,7 +10,7 @@
 #include "Logger.h"
 
 
-inline const bool printTree = true;
+inline const bool printTree = false;
 inline const bool MAKE_IMAGE = false;
 
 
@@ -29,9 +29,9 @@ int main() {
     std::vector<std::string> file_names = {
 //                                          "cube",
 //                                          "icosahedron",
-                                          "bunny_low",
+//                                          "bunny_low",
 //                                           "bunny",
-//                                           "dragon"
+                                           "dragon"
                                            };
 
     std::string obj_file;
@@ -61,7 +61,7 @@ int main() {
         elapsed_time = timer.elapsed();
         std::cout << "Done in " << elapsed_time << timer.units() << std::endl;
         LOGGER.preprocess_time = elapsed_time;
-        if((wf._type == WorldType::KDTREEA) && printTree) {
+        if((wf._type == WorldType::KDTREEA) & printTree) {
             std::ofstream file;
             file.open("../pictures/kdtreea.dot", std::ios::trunc);
 

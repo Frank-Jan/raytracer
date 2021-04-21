@@ -43,9 +43,11 @@ namespace KDTreeB
         std::vector<TBBox> setBBox(std::vector<Triangle>&);
         void build(const std::vector<TBBox>&);
         void buildB(const std::vector<TBBox>&);
+        void buildC(const std::vector<TBBox>&);
 
         unsigned insertTriangles(std::vector<TBBox>&);
         unsigned insertTriangles(const std::vector<TBBox>&, const std::vector<bool>& active);
+        unsigned insertTriangles(const std::vector<TBBox>&, const std::vector<char>& active);
 
         inline bool hit_object(const Ray&, ShadeRec&, unsigned tidx, unsigned num);
         inline UNode const* const frontChild(UNode const *, const Ray& ray) const;

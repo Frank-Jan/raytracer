@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.16)
 project(raytracer)
 
 set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+add_compile_options(-fno-omit-frame-pointer)
 #
 include_directories(.)
 include_directories(world)
@@ -54,7 +55,7 @@ set(HEADER_FILES
         BRDF/GlossySpecular.h
         Materials/Matte.h
         reader/Reader.h
-        geometric/triangle.h
+        geometric/Triangle.h
         world/KDTreeA/KDTree.h)
 
 set(SOURCE_FILES
@@ -114,7 +115,7 @@ set(SOURCE_FILES
         util/TBBox.h
         reader/Reader.cpp
         world/World.h
-        geometric/triangle.cpp
+        geometric/Triangle.cpp
         world/KDTreeA/KDTree.cpp
         world/KDTreeA/Dot.h
         world/KDTreeA/Dot.cpp

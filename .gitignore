@@ -4,3 +4,4 @@ objects/*
 build*
 geometric_emissive/*
 .idea/*
+cmake-*
