@@ -1,0 +1,138 @@
+cmake_minimum_required(VERSION 3.17)
+project(raytracer)
+
+set(CMAKE_CXX_STANDARD 20)
+
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+#
+include_directories(.)
+include_directories(world)
+include_directories(util)
+include_directories(geometric)
+include_directories(tracers)
+include_directories(scenes)
+include_directories(samplers)
+include_directories(export)
+include_directories(camera)
+include_directories(renderer)
+include_directories(Light)
+include_directories(BRDF)
+include_directories(Materials)
+include_directories(reader)
+include_directories(test_dir)
+
+set(HEADER_FILES
+        ${HEADER_FILES}
+        export/bmp.h
+        renderer/Frame.h
+        renderer/Renderer.h
+        renderer/Scene.h
+        camera/Viewplane.h
+        util/Color.h
+        util/Ray.h
+        world/SimpleWorld.h
+        tracers/Tracer.h
+        util/Point2D.h
+        util/Vector3D.h
+        samplers/Sampler.h
+        util/constants.h
+        samplers/UniformRandom.h
+        samplers/GaussianRandom.h
+        samplers/Regular.h
+        samplers/Jittered.h
+        camera/Camera.h
+        util/Matrix3D.h
+        BRDF/BRDF.h
+        tracers/Tracers.h
+        samplers/Samplers.h
+        util/Timer.h
+        tracers/ConstantTracer.h
+        util/ShadeRec.h
+        Light/Light.h
+        BRDF/Lambertian.h
+        BRDF/PerfectSpecular.h
+        BRDF/GlossySpecular.h
+        Materials/Matte.h
+        reader/Reader.h
+        geometric/triangle.h
+        world/KDTreeA/KDTree.h)
+
+set(SOURCE_FILES
+        ${SOURCE_FILES}
+        main.cpp
+        export/bmp.cpp
+        renderer/Frame.cpp
+        renderer/Scene.cpp
+        camera/Viewplane.cpp
+        util/Color.cpp
+        util/Ray.cpp
+        world/SimpleWorld.cpp
+        renderer/Renderer.cpp
+        tracers/Tracer.cpp
+        util/Point2D.cpp
+        util/Vector3D.cpp
+        samplers/UniformRandom.cpp
+        samplers/GaussianRandom.cpp
+        samplers/Regular.cpp
+        samplers/Jittered.cpp
+        samplers/Sampler.cpp
+        util/Matrix3D.cpp
+        camera/Camera.cpp
+        tracers/ConstantTracer.cpp
+        BRDF/Lambertian.cpp
+        BRDF/PerfectSpecular.cpp
+        BRDF/GlossySpecular.cpp
+        Materials/Matte.cpp
+        tracers/RayCast.cpp
+        tracers/RayCast.h
+        Materials/Material.cpp
+        Materials/Material.h
+        Materials/Phong.cpp
+        Materials/Phong.h
+        Light/PointLight.cpp
+        Light/PointLight.h
+        Light/Directional.cpp
+        Light/Directional.h
+        Light/Ambient.cpp
+        Light/Ambient.h
+        tracers/Whitted.cpp
+        tracers/Whitted.h
+        BRDF/BRDF_all.h
+        Light/AmbientOccluder.cpp
+        Light/AmbientOccluder.h
+        tracers/AreaLighting.cpp
+        tracers/AreaLighting.h
+        Materials/Emissive.cpp
+        Materials/Emissive.h
+        Light/AreaLight.cpp
+        Light/AreaLight.h
+        Light/EnvironmentLight.cpp
+        Light/EnvironmentLight.h
+        util/BBox.cpp
+        util/BBox.h
+        util/TBBox.cpp
+        util/TBBox.h
+        reader/Reader.cpp
+        world/World.h
+        geometric/triangle.cpp
+        world/KDTreeA/KDTree.cpp
+        world/KDTreeA/Dot.h
+        world/KDTreeA/Dot.cpp
+        world/KDTreeA/LNode.cpp
+        world/KDTreeA/LNode.h
+        world/KDTreeA/INode.cpp
+        world/KDTreeA/INode.h
+        world/KDTreeA/Node.cpp
+        world/KDTreeA/Node.h
+        world/WorldFactory.cpp
+        world/WorldFactory.h
+        util/Logger.cpp
+        util/Logger.h
+        world/KDTreeB/KDTree.cpp
+        world/KDTreeB/KDTree.h
+        world/KDTreeB/Nodes.cpp
+        world/KDTreeB/Nodes.h
+        world/KDTreeB/Dot.cpp
+        world/KDTreeB/Dot.h)
+
+add_executable(raytracer ${HEADER_FILES} ${SOURCE_FILES})
