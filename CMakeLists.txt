@@ -134,6 +134,6 @@ set(SOURCE_FILES
         world/KDTreeB/Nodes.cpp
         world/KDTreeB/Nodes.h
         world/KDTreeB/Dot.cpp
-        world/KDTreeB/Dot.h)
+        world/KDTreeB/Dot.h util/CLI.cpp util/CLI.h)
 
 add_executable(raytracer ${HEADER_FILES} ${SOURCE_FILES})
