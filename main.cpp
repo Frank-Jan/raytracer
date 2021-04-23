@@ -34,7 +34,7 @@ void printTree(WorldType wt, World* w, const std::string& path, const std::strin
 
 
 int main(int argc, char * argv[]) {
-    CLI cli(argc, argv, std::cerr);
+    CLI cli(argc, argv);
 
     if(not cli.run)
         return 0;
@@ -53,8 +53,8 @@ int main(int argc, char * argv[]) {
     std::string tree_file_path      = "../pictures/";
 
     std::string obj_file = object_file_path + cli.infile;
-    std::string bmp_file = bmp_file_path + cli.outfile;
-
+    std::string bmp_file = bmp_file_path    + cli.outfile;
+    std::string dot_file = bmp_file_path    + cli.outfileT;
     Timer timer;
     long pin_time;
     long preprocess_time;
@@ -75,6 +75,9 @@ int main(int argc, char * argv[]) {
         pin_time = timer.elapsed();
         Frame* frame = render(&scene);
         LOGGER.render_time = timer.elapsed() - pin_time;
+
+        if(cli.printTree)
+            printTree(cli.wf._type, scene.world, bmp_file_path, cli.outfile.substr(0, cli.outfile.size()-4));
 
         if(cli.printImage) {
             std::cout << std::endl;

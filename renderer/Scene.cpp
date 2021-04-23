@@ -95,7 +95,7 @@ void Scene::load(WorldFactory& wf) {
 
     camera = new Camera(camera_size, hres, vres, focal_point);
     camera->translate(0,0,6);
-    camera->lookat(0,0,0);
+    camera->lookat(0,0.5,0);
 
     // SETUP LIGHTS \\
 
@@ -131,7 +131,7 @@ void Scene::load_from_file(WorldFactory& wf, const std::string& filename)
     camera = new Camera(camera_size, hres, vres, focal_point);
 //    camera->translate(1,2,1);
 //    camera->lookat(0,0.5,-0.5);
-    camera->translate(0,0.5,3);
+    camera->translate(3,3.5,3);
     camera->lookat(0,0.5,0);
 
     // SETUP LIGHTS \\

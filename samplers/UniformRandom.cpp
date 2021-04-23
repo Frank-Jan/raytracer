@@ -5,8 +5,9 @@
 UniformRandom::UniformRandom(FLOAT min, FLOAT max) :
 dis(min, max)
 {
-    std::random_device rd;
-    gen.seed(rd());
+//    std::random_device rd;
+//    gen.seed(rd());
+    gen.seed(0);
 }
 
 void UniformRandom::sample_unit_square(Point2D& pp, const int& p, const int& q)

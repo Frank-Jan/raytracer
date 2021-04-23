@@ -4,6 +4,7 @@
 #include "TBBox.h"
 #include <algorithm>
 #include "Logger.h"
+#include "split.h"
 #include <bitset>
 
 namespace KDTreeB
@@ -116,112 +117,112 @@ namespace KDTreeB
         return boxes;
     }
 
-    void countSplit(int& left, int& right, const std::vector<TBBox> &boxes, const Plane& p, const FLOAT& split)
-    {
-        left = 0;
-        right = 0;
-
-        for(const TBBox& box : boxes)
-        {
-            if(box.getSmall(p) > split)
-                right++;
-            else if(box.getBig(p) < split)
-                left++;
-            else {
-                right++;
-                left++;
-            }
-        }
-    }
-
-    inline FLOAT surface_area(const BBox &bbox)
-    {
-        FLOAT width = bbox.getBig(Plane::x) - bbox.getSmall(Plane::x);
-        FLOAT height = bbox.getBig(Plane::y) - bbox.getSmall(Plane::y);
-        FLOAT depth = bbox.getBig(Plane::z) - bbox.getSmall(Plane::z);
-        return 2 * (width * height + width * depth + depth * height);
-    }
-
-    inline FLOAT costSplit(int countL, int countR, const BBox& bbox, Plane split_plane, FLOAT split)
-    {
-        FLOAT SA = surface_area(bbox);
-
-        Plane p[] = {Plane::x, Plane::y, Plane::z, Plane::x, Plane::y};
-        FLOAT du_right = bbox.getBig(split_plane) - split;
-        FLOAT dv = bbox.getBig(p[split_plane+1]) - bbox.getSmall(p[split_plane+1]);
-        FLOAT dw = bbox.getBig(p[split_plane+2]) - bbox.getSmall(p[split_plane+2]);
-
-        FLOAT surface_area_right = 2*(du_right*dv + dv*dw + du_right*dw);
-
-        FLOAT du_left = split - bbox.getSmall(split_plane);
-
-        FLOAT surface_area_left = 2*(du_left*dv + dv*dw + du_left*dw);
-
-        FLOAT chance_hit_left = surface_area_left;
-        FLOAT chance_hit_right = surface_area_right;
-
-        FLOAT cost = cost_travel + cost_intersect * (chance_hit_left * countL + chance_hit_right * countR) / SA;
-        return cost;
-    }
-
-    inline FLOAT costNoSplit(unsigned count)
+//    void countSplit(int& left, int& right, const std::vector<TBBox> &boxes, const Plane& p, const FLOAT& split)
+//    {
+//        left = 0;
+//        right = 0;
+//
+//        for(const TBBox& box : boxes)
+//        {
+//            if(box.getSmall(p) > split)
+//                right++;
+//            else if(box.getBig(p) < split)
+//                left++;
+//            else {
+//                right++;
+//                left++;
+//            }
+//        }
+//    }
+//
+//    inline FLOAT surface_area(const BBox &bbox)
+//    {
+//        FLOAT width = bbox.getBig(Plane::x) - bbox.getSmall(Plane::x);
+//        FLOAT height = bbox.getBig(Plane::y) - bbox.getSmall(Plane::y);
+//        FLOAT depth = bbox.getBig(Plane::z) - bbox.getSmall(Plane::z);
+//        return 2 * (width * height + width * depth + depth * height);
+//    }
+//
+//    inline FLOAT costSplit(int countL, int countR, const BBox& bbox, Plane split_plane, FLOAT split)
+//    {
+//        FLOAT SA = surface_area(bbox);
+//
+//        Plane p[] = {Plane::x, Plane::y, Plane::z, Plane::x, Plane::y};
+//        FLOAT du_right = bbox.getBig(split_plane) - split;
+//        FLOAT dv = bbox.getBig(p[split_plane+1]) - bbox.getSmall(p[split_plane+1]);
+//        FLOAT dw = bbox.getBig(p[split_plane+2]) - bbox.getSmall(p[split_plane+2]);
+//
+//        FLOAT surface_area_right = 2*(du_right*dv + dv*dw + du_right*dw);
+//
+//        FLOAT du_left = split - bbox.getSmall(split_plane);
+//
+//        FLOAT surface_area_left = 2*(du_left*dv + dv*dw + du_left*dw);
+//
+//        FLOAT chance_hit_left = surface_area_left;
+//        FLOAT chance_hit_right = surface_area_right;
+//
+//        FLOAT cost = cost_travel + cost_intersect * (chance_hit_left * countL + chance_hit_right * countR) / SA;
+//        return cost;
+//    }
+//
+    FLOAT costNoSplit(unsigned count)
     {
         FLOAT cost = FLOAT(count) * cost_intersect;
         return cost;
     }
-
-    FLOAT bestSplit(const std::vector<TBBox>& boxes, Plane& tsplit, FLOAT& split, const BBox& bbox)
-    {
-        FLOAT cost = hugeValue;
-        std::vector<FLOAT> points;
-        points.reserve(boxes.size()*2);
-        for(Plane p : {Plane::x, Plane::y, Plane::z})
-        {
-            points.resize(0);
-            for(const TBBox& box : boxes)
-            {
-                points.push_back(box.getSmall(p));
-                points.push_back(box.getBig(p));
-            }
-
-            points.erase(std::unique(points.begin(), points.end()), points.end());
-
-            int countLeft = 0;
-            int countRight = 0;
-
-            FLOAT s = bbox.getSmall(p);
-
-            countSplit(countLeft, countRight, boxes, p, s);
-            FLOAT costS = costSplit(countLeft, countRight, bbox, p, s);
-            FLOAT new_cost;
-            FLOAT prevX = s;
-            for(FLOAT x : points)
-            {
-                if(prevX >= x)
-                    continue;
-                if(x > bbox.getBig(p))
-                    break;
-                prevX = x;
-
-                for(FLOAT i : {-kEpsilon, kEpsilon}) {
-                    countSplit(countLeft, countRight, boxes, p, x+i);
-                    new_cost = costSplit(countLeft, countRight, bbox, p, x+i);
-                    if (new_cost < costS) {
-                        costS = new_cost;
-                        s = x+i;
-                    }
-                }
-            }
-            countSplit(countLeft, countRight, boxes, p, s);
-            if(costS < cost) {
-                cost = costS;
-                split = s;
-                tsplit = p;
-            }
-        }
-
-        return cost;
-    }
+//
+//    FLOAT bestSplit(const std::vector<TBBox>& boxes, Plane& tsplit, FLOAT& split, const BBox& bbox)
+//    {
+//        FLOAT cost = hugeValue;
+//        std::vector<FLOAT> points;
+//        points.reserve(boxes.size()*2);
+//        for(Plane p : {Plane::x, Plane::y, Plane::z})
+//        {
+//            points.resize(0);
+//            for(const TBBox& box : boxes)
+//            {
+//                points.push_back(box.getSmall(p));
+//                points.push_back(box.getBig(p));
+//            }
+//
+//            points.erase(std::unique(points.begin(), points.end()), points.end());
+//
+//            int countLeft = 0;
+//            int countRight = 0;
+//
+//            FLOAT s = bbox.getSmall(p);
+//
+//            countSplit(countLeft, countRight, boxes, p, s);
+//            FLOAT costS = costSplit(countLeft, countRight, bbox, p, s);
+//            FLOAT new_cost;
+//            FLOAT prevX = s;
+//            for(FLOAT x : points)
+//            {
+//                if(prevX >= x)
+//                    continue;
+//                if(x > bbox.getBig(p))
+//                    break;
+//                prevX = x;
+//
+//                for(FLOAT i : {-kEpsilon, kEpsilon}) {
+//                    countSplit(countLeft, countRight, boxes, p, x+i);
+//                    new_cost = costSplit(countLeft, countRight, bbox, p, x+i);
+//                    if (new_cost < costS) {
+//                        costS = new_cost;
+//                        s = x+i;
+//                    }
+//                }
+//            }
+//            countSplit(countLeft, countRight, boxes, p, s);
+//            if(costS < cost) {
+//                cost = costS;
+//                split = s;
+//                tsplit = p;
+//            }
+//        }
+//
+//        return cost;
+//    }
 
     unsigned KDTree::insertTriangles(std::vector<TBBox>& boxes)
     {
@@ -265,7 +266,8 @@ namespace KDTreeB
         std::vector<StackItem> todo;
         std::vector<StackItem> leaves;
 
-        std::vector<TBBox> cboxes = boxes;
+        std::vector<TBBox> cboxes;
+        cboxes.insert(cboxes.begin(), boxes.begin(), boxes.end());
 
         unsigned cNode = 0;
         BBox bba = bbox;
@@ -278,7 +280,11 @@ namespace KDTreeB
         do {
             cost_split = bestSplit(cboxes, tsplit, split, bba);
             cost_no_split = costNoSplit(cboxes.size());
+            char c[] = {'x', 'y', 'z'};
+//            std::cout << "tSplit: " << c[tsplit] << " split: " << split << std::endl;
+//            std::cout << cost_no_split << " " << cost_split << std::endl << std::endl;
             if(cost_no_split > cost_split) {
+
                 nodes.at(cNode) = UNode(tsplit, nodes.size()-cNode, split);
 
                 bbb = bba;

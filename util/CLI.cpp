@@ -85,15 +85,16 @@ std::string getWorld(WorldType wt) {
 CLI::CLI(int argc, char * argv[], std::ostream& o)
 {
     wf._type    = WorldType::SIMPLE;
-    infile      = "current.bmp";
-    outfile     = "cube.obj";
+    infile      = "current.obj";
+    outfileT    = "current.dot";
+    outfile     = "current.bmp";
     printTree   = false;
     printImage  = true;
     repeat      = 0;
     renderImage = true;
     run         = false;
 
-    if(argc <= 0) {
+    if(argc <= 1) {
         printHelp(o);
         return;
     }
@@ -103,7 +104,6 @@ CLI::CLI(int argc, char * argv[], std::ostream& o)
     for(int i = 1; i < (argc); i++)
     {
         sv = argv[i];
-        o << sv << std::endl;
         switch(getToken(sv))
         {
             case f_repeat: {

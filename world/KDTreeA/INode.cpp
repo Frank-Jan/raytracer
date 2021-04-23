@@ -8,6 +8,7 @@
 #include <set>
 #include "Logger.h"
 #include "constants.h"
+#include "split.h"
 
 
 namespace KDTreeA
@@ -27,8 +28,6 @@ namespace KDTreeA
     SplitVector splitNode(const std::vector<TBBox> &, Split split);
     Split scoreSplit(const std::vector<TBBox> &boxes, Plane p, const BBox &bbox_node);
     Node *makeNode(const std::vector<TBBox>& boxes, const BBox &bbox, KDTree& parent);
-//    size_t makeNode(const std::vector<TBBox>& boxes, const BBox &bbox, KDTree& parent);
-    bool BOXES_FIT_BBOX(const std::vector<TBBox>& boxes, const BBox &bbox);
 
     ShadeRec INode::hit_object(const Ray &r, const BBox& bbox, World* world)
     {
@@ -108,7 +107,7 @@ namespace KDTreeA
         rChild = makeNode(spv.right, bbox_node_rchild, parent);
     }
 
-    inline FLOAT surface_area(const BBox &bbox)
+    FLOAT surface_area(const BBox &bbox)
     {
         FLOAT width = bbox.getBig(Plane::x) - bbox.getSmall(Plane::x);
         FLOAT height = bbox.getBig(Plane::y) - bbox.getSmall(Plane::y);
@@ -145,49 +144,6 @@ namespace KDTreeA
 //            return 2*cost;
         return cost;
     }
-//
-//    Node *makeNode(const std::vector<TBBox>& boxes, const BBox &bbox, KDTree& parent)
-//    {
-//        if(boxes.empty()) {
-//            LNode* n = new LNode(boxes);
-//            parent.nodes.push_back(n);
-//            return n;
-//        }
-//
-//        if(ASSERTIONS) {
-//            if(!BOXES_FIT_BBOX(boxes, bbox)) {
-//                std::cerr << "Error: boxes dont fit inside the bbox" << std::endl;
-//            }
-//        }
-//
-//        // test a number of splits
-//        FLOAT SA = surface_area(bbox);
-//        Split xSplit = scoreSplit(boxes, Plane::x, bbox);
-//        Split ySplit = scoreSplit(boxes, Plane::y, bbox);
-//        Split zSplit = scoreSplit(boxes, Plane::z, bbox);
-//
-//        Split bestSplit = xSplit;
-//        if (bestSplit.cost > ySplit.cost)
-//            bestSplit = ySplit;
-//        if (bestSplit.cost > zSplit.cost)
-//            bestSplit = zSplit;
-//
-//        FLOAT splitCost = bestSplit.cost;
-//        FLOAT nosplitCost = relative_no_cost_split(boxes.size());
-//
-//        // no split cost
-//
-//        if (splitCost < nosplitCost) {
-//            INode* n = new INode(boxes, bbox, bestSplit, parent);
-//            parent.nodes.push_back(n);
-//            return n;
-//        }
-//
-//        LNode* n = new LNode(boxes);
-//        parent.nodes.push_back(n);
-//        return n;
-//    }
-
 
     Node * makeNode(const std::vector<TBBox>& boxes, const BBox &bbox, KDTree& parent)
     {
@@ -197,12 +153,6 @@ namespace KDTreeA
             return n;
 //            parent.leaves.emplace_back(boxes);
 //            return parent.leaves.size() - 1;
-        }
-
-        if(ASSERTIONS) {
-            if(!BOXES_FIT_BBOX(boxes, bbox)) {
-                std::cerr << "Error: boxes dont fit inside the bbox" << std::endl;
-            }
         }
 
         // test a number of splits
@@ -301,50 +251,6 @@ namespace KDTreeA
         return split;
     }
 
-    Split scoreSplitB(const std::vector<TBBox> &boxes, Plane p, const BBox &bbox_node)
-    {
-        FLOAT p0 = bbox_node.getSmall(p);
-        FLOAT p1 = bbox_node.getBig(p);
-
-        // first: sort the boxes by smallest plane value
-        std::vector<FLOAT> lower;
-        std::vector<FLOAT> upper;
-        lower.reserve(boxes.size());
-        upper.reserve(boxes.size());
-
-        for (const TBBox &b : boxes) {
-            lower.push_back(b.getSmall(p));
-            upper.push_back(b.getBig(p));
-        }
-
-        std::sort(lower.begin(), lower.end());
-        std::sort(upper.begin(), upper.end());
-
-        int numL = 0;
-        int numR = 0;
-
-        FLOAT txyz = (p1+p0)/2;
-
-        for(int q = 0; q < lower.size(); ++q) {
-            if(lower[q] <= txyz)
-                numL++;
-            if(upper[q] <= txyz)
-                numR++;
-        }
-
-        numR = upper.size() - numR;
-        FLOAT cost = relative_cost_split(numL, numR, bbox_node, p, txyz);
-
-        Split split{};
-        split.txyz = txyz;
-        split.cost = cost;
-        split.typeSplit = p;
-        split.number_left = numL;
-        split.number_right = numR;
-
-        return split;
-    }
-
     SplitVector splitNode(const std::vector<TBBox> &boxes, Split split)
     {
         std::vector<TBBox> left;
@@ -366,25 +272,5 @@ namespace KDTreeA
         sv.right = right;
 
         return sv;
-    }
-
-    bool BOXES_FIT_BBOX(const std::vector<TBBox>& boxes, const BBox &bbox)
-    {
-        for(const TBBox& box : boxes)
-        {
-            if(box.getSmall(Plane::x) > bbox.getBig(Plane::x))
-                return false;
-            if(box.getBig(Plane::x) < bbox.getSmall(Plane::x))
-                return false;
-            if(box.getSmall(Plane::y) > bbox.getBig(Plane::y))
-                return false;
-            if(box.getBig(Plane::y) < bbox.getSmall(Plane::y))
-                return false;
-            if(box.getSmall(Plane::z) > bbox.getBig(Plane::z))
-                return false;
-            if(box.getBig(Plane::z) < bbox.getSmall(Plane::z))
-                return false;
-        }
-        return true;
     }
 }

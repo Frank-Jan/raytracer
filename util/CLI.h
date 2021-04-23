@@ -16,6 +16,7 @@ public:
     WorldFactory wf;
     std::string infile;
     std::string outfile;
+    std::string outfileT;
     bool printTree;
     bool printImage;
     bool renderImage;
